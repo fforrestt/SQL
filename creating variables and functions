@@ -1,0 +1,240 @@
+--declare a variable
+declare @isThisNull varchar(30) --starts out as null
+select @isThisNull, isnull(@isThisNull, 'Yep, it is null')
+ 
+--set the variable as something other than null
+set @isThisNull = 'Nope, it is not null'
+select @isThisNull, isnull(@isThisNull, 'Yep, it is null')
+ 
+create function dbo.AddTwoInts(@FirstNumber int, @SecondNumber int)
+returns int as 
+begin
+--first declare the variable to temporarily hold the result
+declare @returnvalue int --the data type matches the "RETURNS" clause 
+--do whatever needs to be done to set that variable to the correct value
+set @returnvalue = @FirstNumber + @SecondNumber
+--return the value to the calling statement
+return @returnvalue
+end
+go
+ 
+select dbo.AddTwoInts (5, 10)
+ 
+--function to count the amount of vidcasts a user has made
+create function dbo.vc_VidCastCount(@UserID int)
+returns int as --count() is an integer value, so it returns it as an int
+begin 
+declare @returnValue int --matches the function's return type
+/* 
+Get the count of the VidCasts for the provided UserID and
+assign that value to @returnvalue. Note that we use the 
+@userID parameter in the WHERE clause to our count to that
+User's VidCast records.
+*/
+select @returnValue = count(vc_UserID) from vc_VidCast
+where vc_Vidcast.vc_UserID = @UserID
+ 
+--return @returnvalue to the calling code
+return @returnValue
+end
+go
+ 
+select top 10
+*
+, dbo.vc_VidCastCount(vc_UserID) as VidCastCount
+from vc_User 
+order by VidCastCount desc
+ 
+--function to retrieve the vc_TagID for for a given Tag's text
+create function dbo.vc_TagIDLookup(@TagText varchar(20))
+returns int as --vc_TagID is an int, so we'll match that
+begin 
+declare @returnValue int --matches the functions return type
+/* get the vc_TagID of the vc_Tag record whose TagText 
+matches the parameter and assign that value to @returnValue */
+ 
+select @returnValue = vc_TagID from vc_Tag
+where TagText = @TagText
+--send the vc_TagID back to the caller
+return @returnValue
+end
+go
+ 
+select dbo.vc_TagIDLookup('Music')
+select dbo.vc_TagIDLookup('Tunes')
+ 
+--create a view to retrieve the top 10 vc_Users and their
+--vidcast counts
+create view vc_MostProlificUsers as 
+select top 10 
+*
+, dbo.vc_VidCastCount(vc_UserID) as VidCastCount
+from vc_User
+order by VidCastCount desc
+go
+ 
+select * from vc_MostProlificUsers
+ 
+--create a procedure to update the vc_User's email address
+--the first parameter is the user name for the user to change
+--the second is the new email address
+create procedure vc_ChangeUserEmail(@userName varchar(20), @newEmail varchar(50))
+as
+begin
+update vc_User set EmailAddress = @newEmail
+where UserName = @userName
+end
+go
+ 
+exec vc_ChangeUserEmail 'tardy', 'kmstudent@syr.edu'
+ 
+select * from vc_User where UserName = 'tardy'
+ 
+insert into vc_Tag (TagText) values ('Cat Videos')
+select * from vc_Tag where vc_TagID = @@IDENTITY
+ 
+insert into vc_Tag (TagText) values ('Dog Videos')
+select * from vc_Tag where vc_TagID = SCOPE_IDENTITY()
+ 
+/* createa a procedure that adds a row to the userLogin table
+This procedure should be run when a user logs in. It will 
+record who they are and where they log in from.
+*/
+create or alter procedure vc_AddUserLogin(@userName varchar(20), @loginFrom varchar(50))
+as
+begin
+--we have the user name, but we need the UserID from the login table
+--first, declare a variable to hold the ID
+declare @userID int
+select @userID = vc_UserID from vc_User
+where UserName = @userName
+ 
+--now we can add the row using an INSERT statement
+insert into vc_UserLogin (vc_UserID, LoginLocation)
+values (@userID, @loginFrom)
+ 
+--lastly, return the scopeidentity() so the 
+--calling code knows the primary key of the 
+--row we just added. 
+return scope_identity()
+end
+go
+ 
+declare @addedValue int
+exec @addedValue = vc_AddUserLogin 'tardy', 'localhost'
+select
+vc_User.vc_UserID
+, vc_User.UserName
+, vc_UserLogin.UserLoginTimestamp
+, vc_UserLogin.LoginLocation
+from vc_User
+join vc_UserLogin on vc_User.vc_UserID = vc_UserLogin.vc_UserID
+where vc_UserLoginID = @addedValue
+ 
+select * from dbo.vc_UserLogin
+ 
+/*
+create a function to retrieve a vc_UserID for a given user name
+*/
+ 
+create function dbo.vc_UserIDLookup(@userName varchar(20))
+returns int as 
+begin
+declare @returnValue int
+select @returnValue = vc_UserID from vc_User
+where UserName = @userName
+return @returnValue
+end
+go
+ 
+select 'Trying the vc_UserIDLookup fuction.', dbo.vc_UserIDLookup('tardy')
+ 
+create or alter function dbo.vc_TagVidCastCount(@VidCastID int)
+returns int as
+begin
+declare @returnValue int
+select @returnValue = count(vc_TagID) from vc_VidCastTagList
+where vc_TagID = @VidCastID
+return @returnValue
+end
+go
+ 
+select vc_Tag.TagText, dbo.vc_TagVidCastCount(vc_Tag.vc_TagID) as VidCasts 
+From vc_Tag
+ 
+create function dbo.vc_VidCastDuration(@UserID int)
+returns int as
+begin
+declare @returnValue int
+select @returnValue = sum(datediff(n, StartDateTime, EndDateTime)) from vc_VidCast
+where vc_UserID = @UserID
+return @returnValue
+end
+go
+ 
+select *
+, dbo.vc_VidCastDuration(vc_UserID) as TotalMinutes
+from vc_User
+ 
+create view vc_TagReport as 
+select vc_Tag.TagText, 
+dbo.vc_TagVidCastCount(vc_Tag.vc_TagID) as VidCasts
+from vc_Tag
+go
+ 
+select * from vc_TagReport order by VidCasts desc
+ 
+alter view vc_MostProlificUsers as 
+select top 10 
+*
+, dbo.vc_VidCastCount(vc_UserID) as VidCastCount,
+dbo.vc_VidCastDuration(vc_UserID) as TotalMinutes
+from vc_User
+order by VidCastCount desc
+go
+ 
+select UserName, VidCastCount, TotalMinutes from vc_MostProlificUsers      
+ 
+/* Create a stored procedure to add a new tag to the database
+Inputs: 
+@tagText : the text of the new tag
+@description : a brief description of the tag (nullable)
+Returns:
+@@identity with the value inserted
+*/
+create procedure vc_AddTag(@tagText varchar(20), @description varchar(100)=null) as
+begin
+insert into vc_Tag (TagText, TagDescription)
+values (@tagText, @description)
+return @@identity
+end
+go
+ 
+declare @newTagID int
+exec @newTagID = vc_AddTag 'SQL', 'Finally, a SQL Tag'
+select * from vc_Tag where vc_TagID = @newTagID
+ 
+create procedure vc_FinishVidCast(@vidCastID int)
+as
+begin
+update vc_VidCast set EndDateTime = getdate(), vc_StatusID = '3'
+where vc_VidCastID = @vidCastID
+return scope_identity()
+end
+go
+ 
+declare @newVC int
+insert into vc_VidCast(VidCastTitle, StartDateTime,ScheduleDurationMinutes, vc_UserID, 
+vc_StatusID)
+values (
+'Finally Done with Sprocs'
+, Dateadd(n, -45, getdate())
+, 45
+, (select vc_UserID from vc_User where UserName = 'Tardy')
+, (Select vc_StatusID from vc_Status where StatusText='Started')
+)
+ 
+Set @newVC = SCOPE_IDENTITY()
+select * from vc_VidCast where vc_VidCastID = @newVC
+exec vc_FinishVidCast @newVC
+select * from vc_VidCast where vc_VidCastID = @newVC
