@@ -1,0 +1,110 @@
+/*
+Author : Forrest Fallon
+Script : Lab 05
+Course : IST
+Term   : April, 2021
+*/
+ 
+--Creating the User Table
+Create Table vc_User (
+--Columns for the User Table
+vc_UserID int identity, 
+UserName varchar(20) not null,
+EmailAddress varchar(50) not null, 
+UserDescription varchar(200),
+WebSiteURL varchar(50),
+UserRegisteredDate datetime not null default GetDate(),
+--Constraints on the User Table
+Constraint PK_vc_User Primary Key (vc_UserID),
+Constraint U1_vc_User Unique(UserName),
+Constraint U2_vc_User Unique(EmailAddress)
+)
+--End Creating the User table
+ 
+
+--Creating the UserLogin table
+Create Table vc_UserLogin (
+--Columns for the UserLogin table
+vc_UserLoginID int identity,
+vc_UserID int not null,
+UserLoginTimestamp datetime not null default GetDate(),
+LoginLocation varchar(50) not null,
+--Constraints on the User Login Table
+Constraint PK_vc_UserLogin Primary Key (vc_UserLoginID),
+Constraint FK1_vc_UserLogin Foreign Key (VC_UserID) References vc_User(vc_UserID)
+)
+--End Creating the User Login Table
+ 
+--Adding Data to the User Table
+insert into vc_User(UserName, EmailAddress, UserDescription)
+values
+('RDwight', 'rdwight@nodomain.xyz', 'Piano Teacher'),
+('SaulHudson', 'slash@nodomain.xyz', 'I like Les Paul guitars'),
+('Gordon', 'sumner@nodomain.xyz', 'Former cop')
+select * from vc_User
+ 
+--Creating the Follower List table
+create table vc_FollowerList (
+--Columns for the follower list table
+vc_FollowerListID int identity,
+FollowerID int not null,
+FollowedID int not null,
+FollowerSince datetime not null,
+--Constraints on the Follower List table
+constraint PK_vc_FollowerList primary key (vc_FollowerListID),
+constraint U1_vc_FollowerList unique (FollowerID, FollowedID),
+constraint FK1_vc_FollowerList foreign key (FollowerID) references vc_User(vc_UserID),
+constraint FK2_vc_FollowerList foreign key (FollowedID) references vc_User(vc_UserID)
+)
+--End creating the Follower List table
+ 
+create table vc_Tag (
+vc_TagID int identity not null,
+TagText varchar(20) not null,
+TagDescription varchar(100),
+constraint PK_vc_Tag primary key (vc_TagID),
+constraint U1_vc_Tag unique (TagText)
+)
+ 
+create table vc_Status (
+vc_StatusID int identity not null,
+StatusText varchar(20),
+constraint PK_vc_Status primary key (vc_StatusID),
+constraint U1_vc_Status unique (StatusText)
+)
+ 
+
+create table vc_VidCast (
+vc_VidCastID int identity not null,
+VidCastTitle varchar(50) not null,
+StartDateTime datetime,
+EndDateTime datetime,
+ScheduledDurationMinutes int,
+RecordingURL varchar(50),
+vc_UserID int,
+vc_StatusID int,
+constraint PK_vc_VidCast primary key (vc_VidCastID),
+constraint FK1_vc_VidCast foreign key (vc_UserID) references vc_User(vc_UserID),
+constraint FK2_vc_VidCast foreign key (vc_StatusID) references vc_Status(vc_StatusID)
+)
+create table vc_VidCastTagList (
+vc_VidCastTagListID int identity not null,
+vc_TagID int not null,
+vc_VidCastID int not null,
+constraint PK_vc_VidCastTagList primary key (vc_VidCastTagListID),
+constraint FK1_vc_VidCastTagList foreign key (vc_TagID) references vc_tag(vc_tagID),
+constraint FK2_vc_VidCastTagList foreign key (vc_VidCastID) references vc_VidCast(vc_VidCastID),
+constraint U1_vc_VidcastTagList unique (vc_tagID, vc_VidCastID)
+)
+
+
+
+create table vc_UserTagList (
+vc_UserTagListID int identity not null,
+vc_TagID int not null,
+vc_UserID int not null,
+constraint PK_vc_UserTagList primary key (vc_UserTagListID),
+constraint FK1_vc_UserTagList foreign key (vc_TagID) references vc_Tag(vc_TagID),
+constraint FK2_vc_UserTagList foreign key (vc_UserID) references vc_User(vc_UserID),
+constraint U1_vc_UserTagList unique (vc_TagID, vc_UserID)
+)
