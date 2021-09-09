@@ -1,0 +1,91 @@
+-- Adding a row to the vc_Status table--
+insert into vc_Status (StatusText)
+values ('Scheduled')
+ 
+select * from vc_Status
+ 
+--Adding three more rowst ot he vc_stuatus table
+insert into vc_Status (StatusText)
+values ('Started'), ('Finished'), ('On Time')
+ 
+select * from vc_User where UserName = 'SaulHudson'
+select * from vc_Status where StatusText = 'Finished'
+ 
+--adding a vidcast record to the VidCast table
+ 
+insert into vc_VidCast
+(VidCastTitle, StartDateTime, EndDateTime,  ScheduledDurationMinutes, RecordingURL, vc_UserID, vc_StatusID)
+values
+('December Snow', '3/1/2018 14:00', '3/1/2018 14:30', 30, '/XVF1234', 2, 3)
+ 
+--read all rows from vc_VidCast
+select * from vc_VidCast
+ 
+select
+vc_User.UserName,
+vc_User.EmailAddress,
+vc_VidCast.VidCastTitle,
+vc_VidCast.StartDateTime,
+vc_VidCast.EndDateTime,
+vc_VidCast.ScheduledDurationMinutes / 60.0 as ScheduledHours,
+vc_Status.StatusText
+from vc_VidCast
+join vc_User on vc_VidCast.vc_UserID = vc_user.vc_UserID
+join vc_Status on vc_VidCast.vc_StatusID = vc_Status.vc_StatusID
+where vc_User.UserName = 'SaulHudson'
+order by vc_VidCast.StartDateTime
+ 
+ 
+--correcting a user's UserRegisteredDate
+update vc_User set UserRegisteredDate = '3/1/2018' where UserName = 'SaulHudson'
+ 
+select * from vc_User where UserName = 'SaulHudson'
+ 
+--see what rows we have in status
+select * from vc_Status
+ 
+--delete the On time status
+delete vc_Status where StatusText = 'On time'
+ 
+-- see the effect
+select * from vc_Status
+ 
+ 
+select * from vc_Tag
+ 
+
+
+insert into vc_Tag (TagText, TagDescription) values ('Personal', 'About People'),
+('Professional', 'Business, business, business'), 
+('Sports', 'All manner of sports'), 
+('Music', 'Music analysis, news, and thoughts'), 
+('Games', 'Live streaming our favorite games')
+ 
+insert into vc_User (UserName, EmailAddress, UserDescription) values ('TheDoctor', 'tomBaker@nodomain.xyz', 'The definite article'), 
+('HairCut', 'S.todd@nodomain.xyz', 'Fleet Street barber shop'), 
+('DnDGal', 'dnd@nodomain.xyz', null)
+select * from vc_User
+ 
+INSERT INTO vc_UserTagList (vc_UserID, vc_TagID) VALUES(( SELECT vc_UserID FROM vc_User WHERE UserName='DnDGal'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Sports')), (( SELECT vc_UserID FROM vc_User WHERE UserName='DnDGal'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Professional')), (( SELECT vc_UserID FROM vc_User WHERE UserName='RDwight'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Professional')), (( SELECT vc_UserID FROM vc_User WHERE UserName='SaulHudson'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Sports')), (( SELECT vc_UserID FROM vc_User WHERE UserName='Gordon'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Personal')), (( SELECT vc_UserID FROM vc_User WHERE UserName='DnDGal'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Personal')), (( SELECT vc_UserID FROM vc_User WHERE UserName='Gordon'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Games')), (( SELECT vc_UserID FROM vc_User WHERE UserName='HairCut'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Professional')), (( SELECT vc_UserID FROM vc_User WHERE UserName='TheDoctor'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Music')), (( SELECT vc_UserID FROM vc_User WHERE UserName='DnDGal'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Games')), (( SELECT vc_UserID FROM vc_User WHERE UserName='SaulHudson'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Games')), (( SELECT vc_UserID FROM vc_User WHERE UserName='Gordon'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Professional')), (( SELECT vc_UserID FROM vc_User WHERE UserName='HairCut'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Music')), (( SELECT vc_UserID FROM vc_User WHERE UserName='TheDoctor'), 
+(SELECT vc_TagID FROM vc_Tag WHERE TagText='Personal'))
+ 
+select * from vc_UserTagList
+ 
+ 
+select vc_User.UserName, vc_User.EmailAddress, vc_Tag.TagText from vc_User
+join vc_UserTagList on vc_UserTagList.vc_UserID = vc_User.vc_UserID
+join vc_Tag on vc_Tag.vc_TagID = vc_UserTagList.vc_TagID
+order by vc_User.UserName, vc_Tag.TagText
