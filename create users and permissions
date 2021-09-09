@@ -1,0 +1,92 @@
+--Creating a guestuser database user
+create user guestuser for login guestuser
+ 
+guest user code
+exec vc_AddUserLogin 'The Doctor', 'Gallifrey'
+go
+ 
+exec vc_FinishVidCast 838
+ 
+FFallon code
+select vc_VidCastID from vc_VidCast where VidCastTitle = 'Rock Your Way To Success'
+ 
+select * from vc_UserLogin
+ 
+select * from vc_VidCast where vc_VidCastID = 838
+ 
+--Creating a guestuser database user
+create user guestuser for login guestuser
+ 
+--Grant read permission on the user table
+grant select on vc_User to guestuser
+ 
+--Revoke the select permission!
+revoke select on vc_User to guestuser
+ 
+--Give them the view instead
+grant select on vc_MostProlificUsers to guestuser
+ 
+--Allow guestuser to run some stored procedures
+grant execute on vc_AddUserLogin to guestuser
+grant execute on vc_FinishVidCast to guestuser
+ 
+exec vc_AddUserLogin 'TheDoctor', 'Gallifrey'
+ 
+select vc_VidCastID from vc_VidCast where VidCastTitle = 'Rock Your Way To Success'
+ 
+select * from vc_UserLogin
+ 
+select * from vc_VidCast where vc_VidCastID = 838
+ 
+revoke select on vc_MostProlificUsers to guestuser
+ 
+--Allow guestuser to run some stored procedures
+revoke execute on vc_AddUserLogin to guestuser
+revoke execute on vc_FinishVidCast to guestuser
+ 
+--Creating a new table
+create table lab_Test (
+lab_TestID int identity primary key,
+lab_testText varchar(20) unique not null
+)
+ 
+/*This will be a table to keep a log og
+created lab_Test records. 
+we don't want to add a row to this if 
+the inserty into lab_Test fails
+*/
+ 
+create table lab_Log (
+lab_LogID int identity primary key,
+lab_logInt int unique not null
+)
+ 
+insert into lab_Test (lab_testText) values ('One'), ('Two'), ('Three')
+insert into lab_Log (lab_logInt) select lab_TestID from lab_Test
+ 
+--Step 1: Begin the transaction
+begin transaction 
+--Step 2: assess the state of things.
+declare @rc int
+set @rc = @@ROWCOUNT -- Initially 0
+--Step 3: Make the change
+--On success, @@ROWCOUNT is incremented by 1
+--On failure, @@ROWCOUNT does not change
+insert into lab_Test (lab_testText) values ('Fallon')
+--step 4: Check the new state of things
+if(@rc = @@ROWCOUNT) --if @@ROWCOUNT was not changed, fail
+begin
+--Step 5, if failed
+select 'Bail out! It Failed!'
+rollback
+end
+else --Success! Continue
+begin
+--Step 5 if succeeded
+select 'Yay! It worked!'
+insert into lab_Log (lab_logInt) values (@@identity)
+commit
+end
+ 
+select * from lab_Log
+select * from lab_Test
