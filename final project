@@ -1,3 +1,9 @@
+--This is a repeatable script that will create all procedures, views, formulas, tables, and values used for my project. This project involves
+--a fictional computer building business that was previously run on pen and paper, and desperately needed some form of inventory tracking system
+--for incoming inventory orders and outgoing customer orders. Each computer part has multiple tiers, and there are multiple computer "builds" with 
+--different combinations of parts. 
+
+
 --Drop procedures, views, formulas
 drop function if exists MonthlyOrders
 go
